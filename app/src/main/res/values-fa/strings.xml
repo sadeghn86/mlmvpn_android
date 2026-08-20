@@ -231,7 +231,28 @@
     <string name="about_title">درباره ما</string>
     <string name="about_desc">نام MLMVPN برگرفته از معماری پیشرفته‌ی Multi-Layer Multiplexer است. ما مرزهای ارتباطات سنتی را درنوردیده‌ایم تا به جای تکیه بر یک اتصال ساده، یک پلتفرم فوق‌هوشمند و چندلایه خلق کنیم. این اپلیکیشن با ترکیب همزمان چندین موتور قدرتمند ضدسانسور، ترافیک شما را از امن‌ترین و پرسرعت‌ترین مسیرها هدایت می‌کند. رسالت ما، ارائه یک شبکه پایدار و فوق‌سریع است که محدودیت‌های اینترنتی را در هم می‌شکند و تجربه‌ای آزاد و بی‌نظیر از دنیای وب را برای شما به ارمغان می‌آورد.</string>
     <string name="about_telegram">تلگرام</string>
+    <string name="about_telegram_noxora">تونل NOXORA (تلگرام)</string>
     <string name="about_github">گیت‌هاب</string>
+
+    <string name="drawer_hybrid">ترکیبی V2Ray + سایفون</string>
+    <string name="hybrid_title">ترکیبی V2Ray + سایفون</string>
+    <string name="hybrid_desc">اتصال دو لایه: لایه اول مثل سایفون فیلتر DPI را دور می‌زند (تکه‌تکه کردن TLS، یا SOCKS خودِ اپ سایفون)، بعد لایه دوم کانفیگ VLESS / VMess / Trojan شما را از داخل همان تونل وصل می‌کند. وقتی اتصال مستقیم V2Ray گرفته نمی‌شود از این بخش استفاده کنید.</string>
+    <string name="hybrid_config_label">کانفیگ V2Ray</string>
+    <string name="hybrid_pick_node">انتخاب از تب اتصال</string>
+    <string name="hybrid_hop_label">لایه اول (سایفون)</string>
+    <string name="hybrid_hop_fragment">خودکار (ضد DPI شبیه سایفون)</string>
+    <string name="hybrid_hop_fragment_desc">دست‌دادن TLS را تکه‌تکه می‌کند تا فیلتر نتواند اتصال V2Ray را تشخیص دهد.</string>
+    <string name="hybrid_hop_socks">سایفون محلی (SOCKS)</string>
+    <string name="hybrid_hop_socks_desc">V2Ray را از داخل اپ رسمی سایفون (یا هر SOCKS روی همین گوشی) رد می‌کند.</string>
+    <string name="hybrid_profile_label">پروفایل فرگمنت</string>
+    <string name="hybrid_profile_light">سبک</string>
+    <string name="hybrid_profile_balanced">متعادل</string>
+    <string name="hybrid_profile_aggressive">تهاجمی</string>
+    <string name="hybrid_socks_port">پورت SOCKS محلی</string>
+    <string name="hybrid_status">وضعیت</string>
+    <string name="hybrid_connect">اتصال ترکیبی</string>
+    <string name="hybrid_connecting">در حال اتصال…</string>
+    <string name="hybrid_disconnect">قطع اتصال</string>
     <string name="about_youtube">یوتیوب</string>
     <string name="about_version">نسخه %1$s</string>
 

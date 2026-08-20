@@ -274,6 +274,7 @@ fun AppScreen() {
                         CustomDrawerItem(icon = Icons.Default.LocationOn, text = stringResource(R.string.drawer_fixed_ip), onClick = { scope.launch { drawerState.close() }; openTab("fixed_ip") })
                         CustomDrawerItem(icon = Icons.Default.Dns, text = stringResource(R.string.drawer_workers_list), onClick = { scope.launch { drawerState.close() }; openTab("workers_list") })
                         CustomDrawerItem(icon = Icons.Default.Shield, text = "DNS ضد تحریم شخصی", onClick = { scope.launch { drawerState.close() }; activeModal = "antisanction" })
+                        CustomDrawerItem(icon = Icons.Default.AltRoute, text = stringResource(R.string.drawer_hybrid), onClick = { scope.launch { drawerState.close() }; openTab("hybrid") })
                         CustomDrawerItem(icon = Icons.Default.Link, text = stringResource(R.string.subgen_drawer_menu), onClick = { scope.launch { drawerState.close() }; openTab("sublink") })
                         CustomDrawerItem(icon = Icons.Default.Book, text = stringResource(R.string.drawer_tutorial), onClick = { scope.launch { drawerState.close() }; openTab("tutorial") })
                         CustomDrawerItem(icon = Icons.Default.Info, text = stringResource(R.string.drawer_about), onClick = { scope.launch { drawerState.close() }; openTab("about") })
@@ -402,6 +403,11 @@ fun AppScreen() {
                 if (visitedTabs.contains("about")) {
                     Box(modifier = Modifier.fillMaxSize().offset(x = if (activeTab == "about") 0.dp else 10000.dp)) {
                         AboutScreen(onDismiss = { goBack() })
+                    }
+                }
+                if (visitedTabs.contains("hybrid")) {
+                    Box(modifier = Modifier.fillMaxSize().offset(x = if (activeTab == "hybrid") 0.dp else 10000.dp)) {
+                        HybridTab(onDismiss = { goBack() })
                     }
                 }
                 if (visitedTabs.contains("fixed_ip")) {

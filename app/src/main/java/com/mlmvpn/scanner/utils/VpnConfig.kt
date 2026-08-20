@@ -28,8 +28,12 @@ data class VpnConfig(
     companion object {
         fun parseUri(uriString: String): VpnConfig? {
             try {
+                val trimmed = uriString.trim()
+                if (trimmed.startsWith("vmess://", ignoreCase = true)) {
+                    return parseVmess(trimmed)
+                }
                 val config = VpnConfig()
-                val uri = Uri.parse(uriString)
+                val uri = Uri.parse(trimmed)
                 config.protocol = uri.scheme?.lowercase() ?: return null
                 if (config.protocol != "vless" && config.protocol != "trojan") return null
                 
@@ -61,6 +65,47 @@ data class VpnConfig(
                 return config
             } catch (e: Exception) {
                 return null
+            }
+        }
+
+        private fun parseVmess(uriString: String): VpnConfig? {
+            return try {
+                val b64 = uriString.substringAfter("://")
+                val jsonStr = String(
+                    android.util.Base64.decode(b64, android.util.Base64.DEFAULT)
+                )
+                val o = org.json.JSONObject(jsonStr)
+                val port = o.optInt("port", 0).takeIf { it > 0 }
+                    ?: o.optString("port").toIntOrNull()
+                    ?: 443
+                val net = o.optString("net", "tcp").ifBlank { "tcp" }
+                val tlsRaw = o.optString("tls")
+                val tls = when {
+                    tlsRaw.equals("reality", true) -> "reality"
+                    tlsRaw.equals("tls", true) || tlsRaw == "1" -> "tls"
+                    else -> tlsRaw
+                }
+                val host = o.optString("host")
+                VpnConfig(
+                    protocol = "vmess",
+                    name = o.optString("ps"),
+                    address = o.optString("add"),
+                    port = port,
+                    uuid = o.optString("id"),
+                    network = net,
+                    wsHost = host,
+                    wsPath = o.optString("path"),
+                    xhttpHost = host,
+                    xhttpPath = o.optString("path"),
+                    tls = tls,
+                    sni = o.optString("sni").ifBlank { host },
+                    alpn = o.optString("alpn"),
+                    fingerprint = o.optString("fp"),
+                    publicKey = o.optString("pbk"),
+                    shortId = o.optString("sid")
+                )
+            } catch (_: Exception) {
+                null
             }
         }
     }

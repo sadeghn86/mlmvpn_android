@@ -172,6 +172,8 @@ class MyVpnService : VpnService() {
             // holding xrayMutex, so the teardown below would queue behind it. Signal it
             // here, before contending for the lock, so the button responds immediately.
             com.mlmvpn.core.aether.AetherTunEngine.requestAbort()
+            com.mlmvpn.scanner.engines.hybrid.PsiphonV2rayEngine.hopStatusFlow.value =
+                com.mlmvpn.scanner.engines.hybrid.PsiphonV2rayEngine.HopStatus.IDLE
             getSharedPreferences("game_booster_prefs", android.content.Context.MODE_PRIVATE)
                 .edit().putBoolean("game_mode_active", false).apply()
             serviceScope.launch {
@@ -257,6 +259,7 @@ class MyVpnService : VpnService() {
         val allowLan = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this).getBoolean("allow_lan", false)
         val vpnPrefs = getSharedPreferences("vpn_routing_prefs", android.content.Context.MODE_PRIVATE)
         val mtu = vpnPrefs.getInt("vpn_mtu", 1420)
+        val extraDisallowed = intent.getStringArrayExtra("EXCLUDE_PACKAGES")?.toList() ?: emptyList()
 
         serviceScope.launch {
             xrayMutex.withLock {
@@ -291,7 +294,7 @@ class MyVpnService : VpnService() {
                 val engineOwnsTun = isAmneziaWg || isAetherCfg || isVpnGate || isSoftEther
                 var fd = 0
                 if (!isProxyMode && !engineOwnsTun) {
-                    setupVpn(backendDns, mtu, isRawJsonConfig)
+                    setupVpn(backendDns, mtu, isRawJsonConfig, extraDisallowed)
                     fd = vpnInterface?.fd ?: 0
                 }
                 // Surface the TUN state in the in-app GST log so we can tell whether the
@@ -329,8 +332,13 @@ class MyVpnService : VpnService() {
                 }
 
                 try {
-                    val isGst = nodeUri.startsWith("{") && org.json.JSONObject(nodeUri).optString("type") == "gst"
-                    val isHybrid = nodeUri.startsWith("{") && org.json.JSONObject(nodeUri).optString("type") == "hybrid"
+                    val configType = try {
+                        if (nodeUri.startsWith("{")) org.json.JSONObject(nodeUri).optString("type") else ""
+                    } catch (_: Exception) { "" }
+                    val isGst = configType == "gst"
+                    val isHybrid = configType == "hybrid"
+                    val isPsiphonV2ray = configType ==
+                        com.mlmvpn.scanner.engines.hybrid.PsiphonV2rayEngine.CONFIG_TYPE
                     if (isAetherCfg) {
                         // Full-device Aether tunnel: TUN → tun2proxy → the Aether process's
                         // SOCKS5. Same shape as the GST branch below. No Xray in the path.
@@ -435,6 +443,23 @@ class MyVpnService : VpnService() {
                                 Log.d("MyVpnService", "GST Engine (full tunnel) started")
                                 connectionPhaseFlow.value = Phase.CONNECTED
                             }
+                        }
+                    } else if (isPsiphonV2ray) {
+                        Log.d("MyVpnService", "Psiphon+V2Ray hybrid config detected")
+                        CrashReporter.note("engine start: PsiphonV2ray")
+                        currentEngine = com.mlmvpn.scanner.engines.hybrid.PsiphonV2rayEngine(fd)
+                        val success = currentEngine?.start(this@MyVpnService, nodeUri, localPort) ?: false
+                        if (!success) {
+                            Log.e("MyVpnService", "Failed to start Psiphon+V2Ray hybrid engine")
+                            try { currentEngine?.stop() } catch (_: Exception) {}
+                            currentEngine = null
+                            connectionPhaseFlow.value = Phase.FAILED
+                            isRunning = false
+                            connectedNodeId = null
+                            stopSelf()
+                        } else {
+                            Log.d("MyVpnService", "Psiphon+V2Ray hybrid engine started")
+                            connectionPhaseFlow.value = Phase.CONNECTED
                         }
                     } else if (isHybrid) {
                         // Hybrid Routing (Phase 6): TCP (login/API) via a VLESS/Trojan tunnel,
@@ -735,7 +760,12 @@ class MyVpnService : VpnService() {
         return START_STICKY
     }
 
-    private fun setupVpn(backendDns: String = "1.1.1.1", mtu: Int = 1420, isRawJsonConfig: Boolean = false) {
+    private fun setupVpn(
+        backendDns: String = "1.1.1.1",
+        mtu: Int = 1420,
+        isRawJsonConfig: Boolean = false,
+        extraDisallowed: List<String> = emptyList()
+    ) {
         if (vpnInterface != null) return
 
         try {
@@ -786,6 +816,10 @@ class MyVpnService : VpnService() {
                 } else {
                     try { builder.addDisallowedApplication(applicationContext.packageName) } catch (e: Exception) {}
                 }
+            }
+            for (pkg in extraDisallowed) {
+                if (pkg.isBlank() || pkg == applicationContext.packageName) continue
+                try { builder.addDisallowedApplication(pkg) } catch (_: Exception) {}
             }
             vpnInterface = builder.establish()
         } catch (e: Exception) {

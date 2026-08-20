@@ -170,6 +170,9 @@ fun AboutScreen(onDismiss: () -> Unit) {
                     AboutLinkRowCustom(stringResource(R.string.about_telegram), "t.me/mlmvpn", Icons.Default.Send, primaryColor) {
                         context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/mlmvpn")))
                     }
+                    AboutLinkRowCustom(stringResource(R.string.about_telegram_noxora), "t.me/NOXORA_Tunnel", Icons.Default.Send, primaryColor) {
+                        context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/NOXORA_Tunnel")))
+                    }
                     AboutLinkRowCustom(stringResource(R.string.about_github), "github.com/mlmvpn", Icons.Default.Code, primaryColor) {
                         context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/mlmvpn")))
                     }
