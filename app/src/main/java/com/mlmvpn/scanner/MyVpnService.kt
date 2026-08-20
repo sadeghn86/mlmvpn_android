@@ -111,13 +111,44 @@ class MyVpnService : VpnService() {
                 putExtra("INTERNAL_RECONNECT", true)
             }
             startService(stopIntent)
-            // connectionPhaseFlow flips to IDLE synchronously at the top of the STOP handler,
-            // before the actual (async, behind xrayMutex) engine teardown below it even starts --
-            // it can't be used as a "teardown finished" signal. There's no such signal exposed,
-            // so use a flat delay generous enough for the slowest engine (Aether killing a native
-            // process) rather than racing a fresh connect against teardown still in flight.
             kotlinx.coroutines.delay(3000)
+            // اتصال سخت (Hard Reconnect): تلاش مجدد + دانلود فایل تنظیمات از GitHub در صورت نیاز
+            downloadConfigFromGitHub()
             startService(intentToRestore)
+        }
+    }
+
+    /**
+     * هنگام قطع اتصال، تلاش برای دانلود فایل‌های تنظیمات/سرور از GitHub
+     * تا اتصال سخت و مقاوم‌تری ایجاد شود.
+     */
+    private fun downloadConfigFromGitHub() {
+        serviceScope.launch {
+            try {
+                Log.i("MyVpnService", "Hard reconnect: attempting to download latest config from GitHub...")
+                val client = okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+                // دانلود فایل تنظیمات اصلی از مخزن عمومی
+                val configUrl = "https://raw.githubusercontent.com/mlmvpn/mlmvpn_android/main/app/src/main/assets/config.json"
+                val req = okhttp3.Request.Builder().url(configUrl).get().build()
+                client.newCall(req).execute().use { resp ->
+                    if (resp.isSuccessful) {
+                        val body = resp.body?.string()
+                        if (!body.isNullOrBlank()) {
+                            val cacheDir = applicationContext.cacheDir
+                            val configFile = java.io.File(cacheDir, "github_config.json")
+                            configFile.writeText(body)
+                            Log.i("MyVpnService", "Hard reconnect: downloaded config from GitHub (${body.length} chars)")
+                        }
+                    } else {
+                        Log.w("MyVpnService", "Hard reconnect: GitHub config download returned HTTP ${resp.code}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("MyVpnService", "Hard reconnect: failed to download config from GitHub", e)
+            }
         }
     }
 
