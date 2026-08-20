@@ -1,4 +1,4 @@
-﻿package com.mlmvpn.scanner.utils
+package com.mlmvpn.scanner.utils
 
 import org.json.JSONArray
 import org.json.JSONObject
@@ -98,6 +98,18 @@ object XrayJsonGenerator {
                 put("users", JSONArray().put(JSONObject().apply {
                     put("id", config.uuid)
                     put("encryption", "none")
+                }))
+            })
+            mainOutbound.put("settings", JSONObject().put("vnext", vnext))
+        } else if (config.protocol == "vmess") {
+            mainOutbound.put("protocol", "vmess")
+            val vnext = JSONArray().put(JSONObject().apply {
+                put("address", config.address)
+                put("port", config.port)
+                put("users", JSONArray().put(JSONObject().apply {
+                    put("id", config.uuid)
+                    put("alterId", 0)
+                    put("security", "auto")
                 }))
             })
             mainOutbound.put("settings", JSONObject().put("vnext", vnext))
@@ -342,6 +354,93 @@ object XrayJsonGenerator {
             put("tag", "blocked")
         })
 
+        return json.toString()
+    }
+
+    /**
+     * V2Ray outbound chained through a first hop (`psiphon-hop`) via `sockopt.dialerProxy`.
+     *
+     * hop = "fragment" — TLS ClientHello fragmentation (DPI evasion, Psiphon-style).
+     * hop = "socks"    — local SOCKS (official Psiphon app or any other client).
+     */
+    fun generateChainedConfig(
+        config: VpnConfig,
+        localPort: Int,
+        backendDns: String = "1.1.1.1",
+        allowLan: Boolean = false,
+        includeTun: Boolean = true,
+        mtu: Int = 1280,
+        hop: String = "fragment",
+        socksAddress: String = "127.0.0.1",
+        socksPort: Int = 1081,
+        fragmentPackets: String = "tlshello",
+        fragmentLength: String = "100-200",
+        fragmentInterval: String = "10-20",
+        pinnedHostIps: Map<String, List<String>> = emptyMap()
+    ): String {
+        val raw = generateConfig(
+            config = config,
+            localPort = localPort,
+            backendDns = backendDns,
+            allowLan = allowLan,
+            includeTun = includeTun,
+            mtu = mtu,
+            useFragment = false,
+            pinnedHostIps = pinnedHostIps
+        )
+        val json = JSONObject(raw)
+        val outbounds = json.getJSONArray("outbounds")
+        for (i in 0 until outbounds.length()) {
+            val o = outbounds.optJSONObject(i) ?: continue
+            if (o.optString("tag") != "proxy") continue
+            val stream = o.optJSONObject("streamSettings") ?: JSONObject()
+            val sockopt = stream.optJSONObject("sockopt") ?: JSONObject()
+            sockopt.put("dialerProxy", "psiphon-hop")
+            stream.put("sockopt", sockopt)
+            o.put("streamSettings", stream)
+        }
+
+        val hopOutbound = JSONObject().apply { put("tag", "psiphon-hop") }
+        if (hop == "socks") {
+            hopOutbound.put("protocol", "socks")
+            hopOutbound.put(
+                "settings",
+                JSONObject().put(
+                    "servers",
+                    JSONArray().put(JSONObject().apply {
+                        put("address", socksAddress)
+                        put("port", socksPort)
+                    })
+                )
+            )
+        } else {
+            hopOutbound.put("protocol", "freedom")
+            hopOutbound.put("settings", JSONObject().apply {
+                put("domainStrategy", "AsIs")
+                put("fragment", JSONObject().apply {
+                    put("packets", fragmentPackets)
+                    put("length", fragmentLength)
+                    put("interval", fragmentInterval)
+                })
+            })
+            hopOutbound.put(
+                "streamSettings",
+                JSONObject().put("sockopt", JSONObject().put("tcpNoDelay", true))
+            )
+        }
+
+        val newOuts = JSONArray()
+        var inserted = false
+        for (i in 0 until outbounds.length()) {
+            val o = outbounds.getJSONObject(i)
+            newOuts.put(o)
+            if (!inserted && o.optString("tag") == "proxy") {
+                newOuts.put(hopOutbound)
+                inserted = true
+            }
+        }
+        if (!inserted) newOuts.put(hopOutbound)
+        json.put("outbounds", newOuts)
         return json.toString()
     }
 

@@ -239,7 +239,28 @@
     <string name="about_title">About Us</string>
     <string name="about_desc">The name MLMVPN is derived from its advanced core architecture: the Multi-Layer Multiplexer. We have pushed the boundaries of traditional networking by designing an ultra-intelligent, multi-layered platform instead of relying on a single connection. By simultaneously orchestrating several powerful anti-censorship engines, this application dynamically routes your traffic through the fastest and most secure paths available. Our mission is to provide a highly stable and ultra-fast network that shatters internet restrictions across multiple layers, delivering an unparalleled and truly free web experience.</string>
     <string name="about_telegram">Telegram</string>
+    <string name="about_telegram_noxora">NOXORA Tunnel (Telegram)</string>
     <string name="about_github">GitHub</string>
+
+    <string name="drawer_hybrid">V2Ray + Psiphon</string>
+    <string name="hybrid_title">V2Ray + Psiphon</string>
+    <string name="hybrid_desc">A two-hop connection: hop 1 evades DPI the way Psiphon does (TLS fragmentation, or your local Psiphon SOCKS), then hop 2 dials your VLESS / VMess / Trojan config through that tunnel. Use this when a direct V2Ray connect is blocked.</string>
+    <string name="hybrid_config_label">V2Ray config</string>
+    <string name="hybrid_pick_node">Pick a config from Connect</string>
+    <string name="hybrid_hop_label">First hop (Psiphon layer)</string>
+    <string name="hybrid_hop_fragment">Automatic (Psiphon-style DPI bypass)</string>
+    <string name="hybrid_hop_fragment_desc">Fragments the TLS handshake so filters cannot fingerprint the V2Ray connection.</string>
+    <string name="hybrid_hop_socks">Local Psiphon SOCKS</string>
+    <string name="hybrid_hop_socks_desc">Chain V2Ray through the official Psiphon app (or any SOCKS on this phone).</string>
+    <string name="hybrid_profile_label">Fragment profile</string>
+    <string name="hybrid_profile_light">Light</string>
+    <string name="hybrid_profile_balanced">Balanced</string>
+    <string name="hybrid_profile_aggressive">Aggressive</string>
+    <string name="hybrid_socks_port">Local SOCKS port</string>
+    <string name="hybrid_status">Status</string>
+    <string name="hybrid_connect">Connect hybrid</string>
+    <string name="hybrid_connecting">Connecting…</string>
+    <string name="hybrid_disconnect">Disconnect</string>
     <string name="about_youtube">YouTube</string>
     <string name="about_version">Version %1$s</string>
 
